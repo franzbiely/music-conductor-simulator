@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
+import {
+  useGestureDetection,
+  type GestureEvent,
+} from './hooks/useGestureDetection'
 import { useHandTracking } from './hooks/useHandTracking'
+
+export type { GestureEvent }
 
 function cameraErrorMessage(err: unknown): string {
   if (err instanceof DOMException) {
@@ -26,13 +32,26 @@ function cameraErrorMessage(err: unknown): string {
   return 'Could not access the camera.'
 }
 
-export function CameraView() {
+type CameraViewProps = {
+  onGesture?: (event: GestureEvent) => void
+}
+
+export function CameraView({ onGesture }: CameraViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [error, setError] = useState<string | null>(null)
-  const { error: handTrackingError } = useHandTracking(videoRef, canvasRef, {
-    objectFit: 'cover',
+  const { landmarksRef, error: handTrackingError } = useHandTracking(
+    videoRef,
+    canvasRef,
+    {
+      objectFit: 'cover',
+      enabled: error === null,
+    },
+  )
+
+  useGestureDetection(landmarksRef, {
     enabled: error === null,
+    onGesture,
   })
 
   useEffect(() => {
