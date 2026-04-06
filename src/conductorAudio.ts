@@ -55,6 +55,11 @@ let context: AudioContext | null = null
 let masterGain: GainNode | null = null
 const activeOscillators: OscillatorNode[] = []
 
+/** AudioContext time after which no scheduled notes remain (exclusive). */
+let playbackEndAt = 0
+/** Prevents overlapping `playSong` schedules from concurrent gesture events. */
+let schedulingPlayback = false
+
 function clampVolume(v: number): number {
   if (Number.isNaN(v)) return 1
   return Math.min(1, Math.max(0, v))
@@ -82,6 +87,9 @@ async function ensureRunning(): Promise<AudioContext> {
  * Stops all currently playing note oscillators immediately (low latency).
  */
 export function stopSong(): void {
+  const { ctx } = getGraph()
+  playbackEndAt = ctx.currentTime
+
   while (activeOscillators.length > 0) {
     const osc = activeOscillators.pop()
     if (!osc) continue
@@ -120,6 +128,7 @@ export async function playSong(): Promise<void> {
   const { gain: outGain } = getGraph()
   let t = ctx.currentTime + SCHEDULE_AHEAD_S
   const peak = 0.11
+  let lastOscStop = t
 
   for (const { f, d } of HAPPY_BIRTHDAY_MELODY) {
     const osc = ctx.createOscillator()
@@ -137,9 +146,38 @@ export async function playSong(): Promise<void> {
     g.exponentialRampToValueAtTime(0.0001, tEnd)
 
     osc.start(t)
-    osc.stop(tEnd + 0.002)
+    lastOscStop = tEnd + 0.002
+    osc.stop(lastOscStop)
     activeOscillators.push(osc)
 
     t = tEnd + 0.012
+  }
+
+  playbackEndAt = lastOscStop
+}
+
+/**
+ * Entry point for external triggers (e.g. conductor gestures). Does not import
+ * gesture types — keeps audio policy here.
+ */
+export async function tryPlaySongOnWaveGesture(): Promise<void> {
+  const { ctx } = getGraph()
+
+  if (schedulingPlayback) {
+    console.debug('[audio] wave ignored (scheduling already in progress)')
+    return
+  }
+
+  if (ctx.currentTime < playbackEndAt) {
+    console.debug('[audio] wave ignored (song still playing)')
+    return
+  }
+
+  console.debug('[audio] wave accepted → playSong()')
+  schedulingPlayback = true
+  try {
+    await playSong()
+  } finally {
+    schedulingPlayback = false
   }
 }
