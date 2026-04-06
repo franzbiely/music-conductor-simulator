@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useHandTracking } from './hooks/useHandTracking'
 
 function cameraErrorMessage(err: unknown): string {
   if (err instanceof DOMException) {
@@ -27,7 +28,12 @@ function cameraErrorMessage(err: unknown): string {
 
 export function CameraView() {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
   const [error, setError] = useState<string | null>(null)
+  const { error: handTrackingError } = useHandTracking(videoRef, canvasRef, {
+    objectFit: 'cover',
+    enabled: error === null,
+  })
 
   useEffect(() => {
     let stream: MediaStream | null = null
@@ -46,14 +52,9 @@ export function CameraView() {
           return
         }
         video.srcObject = stream
-        var playPromise = video.play()
-        if (playPromise !== undefined) {
-          playPromise.then(() => {
-            console.log('Playback started')
-          }).catch((error) => {
-            console.error('Error starting playback:', error)
-          })
-        }
+        void video.play().catch(() => {
+          /* autoplay policy / transient errors */
+        })
       } catch (err) {
         if (stream) {
           stream.getTracks().forEach((t) => t.stop())
@@ -83,13 +84,25 @@ export function CameraView() {
   }
 
   return (
-    <video
-      ref={videoRef}
-      className="camera-view"
-      autoPlay
-      playsInline
-      muted
-      aria-label="Webcam preview"
-    />
+    <div className="camera-view-wrap">
+      <video
+        ref={videoRef}
+        className="camera-view"
+        autoPlay
+        playsInline
+        muted
+        aria-label="Webcam preview"
+      />
+      <canvas
+        ref={canvasRef}
+        className="camera-view-overlay"
+        aria-hidden
+      />
+      {handTrackingError ? (
+        <div className="camera-view-hand-error" role="alert">
+          {handTrackingError}
+        </div>
+      ) : null}
+    </div>
   )
 }
