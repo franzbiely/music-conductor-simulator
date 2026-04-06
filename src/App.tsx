@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { CameraView } from './CameraView'
+import { routeBeatToAudio } from './beatAudioBridge'
 import { routeGestureToAudio } from './gestureAudioBridge'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
@@ -29,7 +30,10 @@ function App() {
         >
           Count is {count}
         </button>
-        <CameraView onGesture={routeGestureToAudio} />
+        <CameraView
+          onGesture={routeGestureToAudio}
+          onBeat={routeBeatToAudio}
+        />
       </section>
 
       <div className="ticks"></div>

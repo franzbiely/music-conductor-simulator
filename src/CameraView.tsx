@@ -3,6 +3,7 @@ import {
   useGestureDetection,
   type GestureEvent,
 } from './hooks/useGestureDetection'
+import { useBeatDetection } from './hooks/useBeatDetection'
 import { useHandTracking } from './hooks/useHandTracking'
 
 export type { GestureEvent }
@@ -34,9 +35,10 @@ function cameraErrorMessage(err: unknown): string {
 
 type CameraViewProps = {
   onGesture?: (event: GestureEvent) => void
+  onBeat?: () => void
 }
 
-export function CameraView({ onGesture }: CameraViewProps) {
+export function CameraView({ onGesture, onBeat }: CameraViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [error, setError] = useState<string | null>(null)
@@ -52,6 +54,11 @@ export function CameraView({ onGesture }: CameraViewProps) {
   useGestureDetection(landmarksRef, {
     enabled: error === null,
     onGesture,
+  })
+
+  useBeatDetection(landmarksRef, {
+    enabled: error === null,
+    onBeat,
   })
 
   useEffect(() => {

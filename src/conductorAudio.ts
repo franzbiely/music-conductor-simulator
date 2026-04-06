@@ -83,6 +83,38 @@ async function ensureRunning(): Promise<AudioContext> {
   return ctx
 }
 
+/** Step index for beat-by-beat `playNextMelodyNote` (wraps at end). */
+let melodyStepIndex = 0
+
+function scheduleMelodyNoteAt(
+  ctx: AudioContext,
+  outGain: GainNode,
+  startTime: number,
+  f: number,
+  d: number,
+): number {
+  const peak = 0.11
+  const osc = ctx.createOscillator()
+  const noteGain = ctx.createGain()
+  osc.type = 'triangle'
+  osc.frequency.setValueAtTime(f, startTime)
+  osc.connect(noteGain)
+  noteGain.connect(outGain)
+
+  const tEnd = startTime + Math.max(d, ATTACK_S + RELEASE_S)
+  const g = noteGain.gain
+  g.setValueAtTime(0.0001, startTime)
+  g.exponentialRampToValueAtTime(peak, startTime + ATTACK_S)
+  g.setValueAtTime(peak, tEnd - RELEASE_S)
+  g.exponentialRampToValueAtTime(0.0001, tEnd)
+
+  osc.start(startTime)
+  const lastStop = tEnd + 0.002
+  osc.stop(lastStop)
+  activeOscillators.push(osc)
+  return lastStop
+}
+
 /**
  * Stops all currently playing note oscillators immediately (low latency).
  */
@@ -127,33 +159,38 @@ export async function playSong(): Promise<void> {
 
   const { gain: outGain } = getGraph()
   let t = ctx.currentTime + SCHEDULE_AHEAD_S
-  const peak = 0.11
   let lastOscStop = t
 
   for (const { f, d } of HAPPY_BIRTHDAY_MELODY) {
-    const osc = ctx.createOscillator()
-    const noteGain = ctx.createGain()
-    osc.type = 'triangle'
-    osc.frequency.setValueAtTime(f, t)
-    osc.connect(noteGain)
-    noteGain.connect(outGain)
-
-    const tEnd = t + Math.max(d, ATTACK_S + RELEASE_S)
-    const g = noteGain.gain
-    g.setValueAtTime(0.0001, t)
-    g.exponentialRampToValueAtTime(peak, t + ATTACK_S)
-    g.setValueAtTime(peak, tEnd - RELEASE_S)
-    g.exponentialRampToValueAtTime(0.0001, tEnd)
-
-    osc.start(t)
-    lastOscStop = tEnd + 0.002
-    osc.stop(lastOscStop)
-    activeOscillators.push(osc)
-
+    lastOscStop = scheduleMelodyNoteAt(ctx, outGain, t, f, d)
+    const tEnd = lastOscStop - 0.002
     t = tEnd + 0.012
   }
 
   playbackEndAt = lastOscStop
+}
+
+/**
+ * Plays a single melody step (Happy Birthday), advances the step index, wraps at end.
+ * Does not stop other scheduled notes (overlaps allowed briefly).
+ */
+export async function playNextMelodyNote(): Promise<void> {
+  const ctx = await ensureRunning()
+  const { gain: outGain } = getGraph()
+  const idx = melodyStepIndex
+  const note = HAPPY_BIRTHDAY_MELODY[idx]!
+  const t0 = ctx.currentTime + SCHEDULE_AHEAD_S
+  const lastStop = scheduleMelodyNoteAt(ctx, outGain, t0, note.f, note.d)
+  melodyStepIndex = (idx + 1) % HAPPY_BIRTHDAY_MELODY.length
+  playbackEndAt = Math.max(playbackEndAt, lastStop)
+  console.debug(
+    '[audio] beat → note',
+    idx + 1,
+    '/',
+    HAPPY_BIRTHDAY_MELODY.length,
+    'next index',
+    melodyStepIndex,
+  )
 }
 
 /**
