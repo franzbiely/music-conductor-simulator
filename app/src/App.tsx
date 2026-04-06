@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { CameraView } from './CameraView'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
@@ -27,6 +28,7 @@ function App() {
         >
           Count is {count}
         </button>
+        <CameraView />
       </section>
 
       <div className="ticks"></div>
