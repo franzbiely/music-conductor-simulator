@@ -86,6 +86,8 @@ async function ensureRunning(): Promise<AudioContext> {
 /** Step index for beat-by-beat `playNextMelodyNote` (wraps at end). */
 let melodyStepIndex = 0
 
+stopSong()
+
 function scheduleMelodyNoteAt(
   ctx: AudioContext,
   outGain: GainNode,
@@ -176,6 +178,7 @@ export async function playSong(): Promise<void> {
  */
 export async function playNextMelodyNote(): Promise<void> {
   const ctx = await ensureRunning()
+  stopSong()
   const { gain: outGain } = getGraph()
   const idx = melodyStepIndex
   const note = HAPPY_BIRTHDAY_MELODY[idx]!
@@ -188,6 +191,29 @@ export async function playNextMelodyNote(): Promise<void> {
     idx + 1,
     '/',
     HAPPY_BIRTHDAY_MELODY.length,
+    'next index',
+    melodyStepIndex,
+  )
+}
+
+export async function playPreviousMelodyNote(): Promise<void> {
+  const ctx = await ensureRunning()
+
+  stopSong()
+
+  const { gain: outGain } = getGraph()
+  const len = HAPPY_BIRTHDAY_MELODY.length
+  const idx = (melodyStepIndex - 1 + len) % len
+  const note = HAPPY_BIRTHDAY_MELODY[idx]!
+  const t0 = ctx.currentTime + SCHEDULE_AHEAD_S
+  const lastStop = scheduleMelodyNoteAt(ctx, outGain, t0, note.f, note.d)
+  melodyStepIndex = idx
+  playbackEndAt = Math.max(playbackEndAt, lastStop)
+  console.debug(
+    '[audio] prev → note',
+    idx + 1,
+    '/',
+    len,
     'next index',
     melodyStepIndex,
   )

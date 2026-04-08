@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CameraView } from './CameraView'
 import { routeBeatToAudio } from './beatAudioBridge'
 import { routeGestureToAudio } from './gestureAudioBridge'
+import { playNextMelodyNote, playPreviousMelodyNote } from './conductorAudio'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
@@ -30,6 +31,14 @@ function App() {
         >
           Count is {count}
         </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="counter" onClick={() => void playPreviousMelodyNote()}>
+            Prev
+          </button>
+          <button className="counter" onClick={() => void playNextMelodyNote()}>
+            Next
+          </button>
+        </div>
         <CameraView
           onGesture={routeGestureToAudio}
           onBeat={routeBeatToAudio}
