@@ -4,6 +4,7 @@ import {
   type GestureEvent,
 } from './hooks/useGestureDetection'
 import { useBeatDetection } from './hooks/useBeatDetection'
+import { useHandOpenness } from './hooks/useHandOpenness'
 import { useHandTracking } from './hooks/useHandTracking'
 
 export type { GestureEvent }
@@ -60,6 +61,8 @@ export function CameraView({ onGesture, onBeat }: CameraViewProps) {
     enabled: error === null,
     onBeat,
   })
+
+  useHandOpenness(landmarksRef, { enabled: error === null })
 
   useEffect(() => {
     let stream: MediaStream | null = null

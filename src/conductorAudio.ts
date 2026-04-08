@@ -17,15 +17,15 @@ const NOTE = {
 /** One entry per note: frequency (Hz), duration (s). */
 const HAPPY_BIRTHDAY_MELODY: readonly { f: number; d: number }[] = [
   // "Happy birthday to you"
-  { f: NOTE.C4, d: 0.18 },
-  { f: NOTE.C4, d: 0.18 },
-  { f: NOTE.D4, d: 0.36 },
-  { f: NOTE.C4, d: 0.36 },
-  { f: NOTE.F4, d: 0.36 },
-  { f: NOTE.E4, d: 0.72 },
+  { f: NOTE.C4, d: 10 },
+  { f: NOTE.C4, d: 10 },
+  { f: NOTE.D4, d: 10 },
+  { f: NOTE.C4, d: 10 },
+  { f: NOTE.F4, d: 10 },
+  { f: NOTE.E4, d: 10 },
   // "Happy birthday to you"
-  { f: NOTE.C4, d: 0.18 },
-  { f: NOTE.C4, d: 0.18 },
+  { f: NOTE.C4, d: 10 },
+  { f: NOTE.C4, d: 10 },
   { f: NOTE.D4, d: 0.36 },
   { f: NOTE.C4, d: 0.36 },
   { f: NOTE.G4, d: 0.36 },
@@ -48,8 +48,8 @@ const HAPPY_BIRTHDAY_MELODY: readonly { f: number; d: number }[] = [
 ]
 
 const SCHEDULE_AHEAD_S = 0.02
-const ATTACK_S = 0.012
-const RELEASE_S = 0.028
+const ATTACK_S = 0.12
+const RELEASE_S = 0.28
 
 let context: AudioContext | null = null
 let masterGain: GainNode | null = null
@@ -164,7 +164,7 @@ export async function playSong(): Promise<void> {
   for (const { f, d } of HAPPY_BIRTHDAY_MELODY) {
     lastOscStop = scheduleMelodyNoteAt(ctx, outGain, t, f, d)
     const tEnd = lastOscStop - 0.002
-    t = tEnd + 0.012
+    t = tEnd + 0.002
   }
 
   playbackEndAt = lastOscStop
