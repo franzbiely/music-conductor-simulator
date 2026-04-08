@@ -24,11 +24,13 @@ type YSample = { t: number; y: number }
 
 const DEFAULT_SMOOTH_ALPHA = 0.26
 const DEFAULT_BUFFER_BLEND = 0.38
-const DEFAULT_UP_V = -0.42
-const DEFAULT_DOWN_V = 0.5
+const DEFAULT_UP_V = -0.3
+const DEFAULT_DOWN_V = 0.35
 const DEFAULT_COOLDOWN_MS = 300
 const DEFAULT_BUFFER_MS = 450
 const DEFAULT_WRIST = 0
+// Tracks middle-fingertip Y relative to wrist — immune to whole-arm movement
+const MIDDLE_TIP = 12
 
 /**
  * Wrist Y beat detector: upward motion (y decreasing) arms; strong downward
@@ -74,12 +76,14 @@ export function useBeatDetection(
       const now = performance.now()
       const lm = landmarksRef.current?.[0]
 
-      if (!lm || lm.length <= wristIndex) {
+      if (!lm || lm.length <= Math.max(wristIndex, MIDDLE_TIP)) {
         rafId = requestAnimationFrame(tick)
         return
       }
 
-      const rawY = lm[wristIndex]!.y
+      // Relative Y = tip minus wrist: only wrist articulation changes this,
+      // so whole-arm vertical movement cancels out.
+      const rawY = lm[MIDDLE_TIP]!.y - lm[wristIndex]!.y
 
       const prevSmooth = smoothYRef.current
       const ySmooth =

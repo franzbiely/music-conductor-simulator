@@ -9,15 +9,16 @@ const TIP_M = 12
 const TIP_R = 16
 const TIP_P = 20
 const INDEX_MCP = 5
-const PINKY_MCP = 17
 
 export type PalmOrientation = 'up' | 'down' | 'neutral'
 
-function computePalmCross(lm: HandLandmarks21): number {
-  const w = lm[WRIST]!
-  const a = lm[INDEX_MCP]!
-  const b = lm[PINKY_MCP]!
-  return (a.x - w.x) * (b.y - w.y) - (a.y - w.y) * (b.x - w.x)
+/**
+ * Returns the Z depth of INDEX_MCP relative to wrist (which is z=0 in MediaPipe).
+ * Negative z = closer to camera → palm facing camera (front/up).
+ * Positive z = farther from camera → back of hand facing camera (down).
+ */
+function palmZ(lm: HandLandmarks21): number {
+  return lm[INDEX_MCP]?.z ?? 0
 }
 
 function computeOpenness(lm: HandLandmarks21): number {
@@ -65,14 +66,14 @@ export function useHandExpression(
   const beatFlashStableRef = useRef(options?.beatFlashRef)
   beatFlashStableRef.current = options?.beatFlashRef
   const smoothRef = useRef<number[]>([])
-  const palmCrossSmRef = useRef<number[]>([])
+  const palmZSmRef = useRef<number[]>([])
   const palmOrientationRef = useRef<PalmOrientation>('neutral')
 
   useEffect(() => {
     if (!enabled) {
       drawOverlayRef.current = null
       smoothRef.current = []
-      palmCrossSmRef.current = []
+      palmZSmRef.current = []
       palmOrientationRef.current = 'neutral'
       return
     }
@@ -98,17 +99,17 @@ export function useHandExpression(
         const smooth = 0.12 * raw + 0.88 * prev
         smoothRef.current[i] = smooth
 
-        const rawCross = computePalmCross(lm)
-        const prevCross = palmCrossSmRef.current[i] ?? rawCross
-        const smCross = 0.08 * rawCross + 0.92 * prevCross
-        palmCrossSmRef.current[i] = smCross
+        const rawZ = palmZ(lm)
+        const prevZ = palmZSmRef.current[i] ?? rawZ
+        const smZ = 0.08 * rawZ + 0.92 * prevZ
+        palmZSmRef.current[i] = smZ
+        // negative z = INDEX_MCP closer to camera = palm facing camera = "front/up"
         const palmOrient: PalmOrientation =
-          smCross > 0.02 ? 'up' : smCross < -0.02 ? 'down' : 'neutral'
+          smZ < -0.025 ? 'up' : smZ > 0.025 ? 'down' : 'neutral'
         if (i === 0) palmOrientationRef.current = palmOrient
 
         const gesture = i === 0 ? opennessToGesture(smooth, isBeat) : opennessToGesture(smooth, false)
-        const palmTag = palmOrient === 'up' ? ' ↑' : palmOrient === 'down' ? ' ↓' : ''
-        const label = `${gesture} (${opennessToLevel(smooth)})${palmTag}`
+        const label = `${gesture} (${opennessToLevel(smooth)})`
 
         const wrist = lm[WRIST]!
         const cx = (wrist.x * box.vw * box.scale + box.offsetX) * dpr
@@ -135,7 +136,7 @@ export function useHandExpression(
     return () => {
       drawOverlayRef.current = null
       smoothRef.current = []
-      palmCrossSmRef.current = []
+      palmZSmRef.current = []
       palmOrientationRef.current = 'neutral'
     }
   }, [enabled, drawOverlayRef])
