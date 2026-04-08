@@ -5,6 +5,21 @@ import {
 } from '@mediapipe/tasks-vision'
 import { useEffect, useRef, useState, type RefObject } from 'react'
 
+export type VideoFitBox = {
+  scale: number
+  offsetX: number
+  offsetY: number
+  vw: number
+  vh: number
+}
+
+export type DrawOverlayFn = (
+  ctx: CanvasRenderingContext2D,
+  box: VideoFitBox,
+  dpr: number,
+  hands: TrackedHands,
+) => void
+
 /** Pin to the installed tasks-vision version so WASM matches the JS bundle. */
 const TASKS_VISION_VERSION = '0.10.34'
 const WASM_BASE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${TASKS_VISION_VERSION}/wasm`
@@ -23,13 +38,7 @@ type VideoFit = 'cover' | 'contain'
 function computeVideoFitBox(
   video: HTMLVideoElement,
   objectFit: VideoFit,
-): {
-  scale: number
-  offsetX: number
-  offsetY: number
-  vw: number
-  vh: number
-} | null {
+): VideoFitBox | null {
   const vw = video.videoWidth
   const vh = video.videoHeight
   const cw = video.clientWidth
@@ -81,6 +90,7 @@ function drawLandmarksOnCanvas(
   video: HTMLVideoElement,
   hands: TrackedHands,
   objectFit: VideoFit,
+  drawOverlay?: DrawOverlayFn | null,
 ) {
   const ctx = canvas.getContext('2d')
   if (!ctx) return
@@ -126,17 +136,21 @@ function drawLandmarksOnCanvas(
       ctx.fill()
     }
   }
+
+  drawOverlay?.(ctx, box, dpr, hands)
 }
 
 export function useHandTracking(
   videoRef: RefObject<HTMLVideoElement | null>,
   canvasRef: RefObject<HTMLCanvasElement | null>,
-  options?: { objectFit?: VideoFit; enabled?: boolean },
+  options?: { objectFit?: VideoFit; enabled?: boolean; drawOverlayRef?: RefObject<DrawOverlayFn | null> },
 ) {
   const objectFit = options?.objectFit ?? 'cover'
   const enabled = options?.enabled ?? true
   const landmarksRef = useRef<TrackedHands | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const drawOverlayStableRef = useRef(options?.drawOverlayRef)
+  drawOverlayStableRef.current = options?.drawOverlayRef
 
   useEffect(() => {
     if (!enabled) {
@@ -192,7 +206,7 @@ export function useHandTracking(
 
         if (list.length > 0) {
           landmarksRef.current = list
-          drawLandmarksOnCanvas(canvas, video, list, objectFit)
+          drawLandmarksOnCanvas(canvas, video, list, objectFit, drawOverlayStableRef.current?.current)
         } else {
           landmarksRef.current = []
           const dpr = window.devicePixelRatio || 1

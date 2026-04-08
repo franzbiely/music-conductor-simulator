@@ -29,7 +29,7 @@ function App() {
           className="counter"
           onClick={() => setCount((count) => count + 1)}
         >
-          Count is {count}
+          Bounces: {count}
         </button>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button className="counter" onClick={() => void playPreviousMelodyNote()}>
@@ -42,6 +42,7 @@ function App() {
         <CameraView
           onGesture={routeGestureToAudio}
           onBeat={routeBeatToAudio}
+          onBounce={() => setCount((c) => c + 1)}
         />
       </section>
 

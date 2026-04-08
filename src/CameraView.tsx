@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import {
   useGestureDetection,
   type GestureEvent,
 } from './hooks/useGestureDetection'
 import { useBeatDetection } from './hooks/useBeatDetection'
+import { useHandExpression } from './hooks/useHandExpression'
 import { useHandOpenness } from './hooks/useHandOpenness'
-import { useHandTracking } from './hooks/useHandTracking'
+import { useHandTracking, type DrawOverlayFn } from './hooks/useHandTracking'
 
 export type { GestureEvent }
 
@@ -37,18 +38,28 @@ function cameraErrorMessage(err: unknown): string {
 type CameraViewProps = {
   onGesture?: (event: GestureEvent) => void
   onBeat?: () => void
+  onBounce?: () => void
 }
 
-export function CameraView({ onGesture, onBeat }: CameraViewProps) {
+export function CameraView({ onGesture, onBeat, onBounce }: CameraViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const drawOverlayRef = useRef<DrawOverlayFn | null>(null)
+  const beatFlashRef = useRef(false)
+  const onBeatPropRef = useRef(onBeat)
+  onBeatPropRef.current = onBeat
+  const onBouncePropRef = useRef(onBounce)
+  onBouncePropRef.current = onBounce
+
   const [error, setError] = useState<string | null>(null)
+  const [palmLabel, setPalmLabel] = useState<string>('')
   const { landmarksRef, error: handTrackingError } = useHandTracking(
     videoRef,
     canvasRef,
     {
       objectFit: 'cover',
       enabled: error === null,
+      drawOverlayRef,
     },
   )
 
@@ -57,12 +68,33 @@ export function CameraView({ onGesture, onBeat }: CameraViewProps) {
     onGesture,
   })
 
+  const handleBeat = useCallback(() => {
+    beatFlashRef.current = true
+    onBeatPropRef.current?.()
+    onBouncePropRef.current?.()
+  }, [])
+
   useBeatDetection(landmarksRef, {
     enabled: error === null,
-    onBeat,
+    onBeat: handleBeat,
   })
 
   useHandOpenness(landmarksRef, { enabled: error === null })
+
+  const { palmOrientationRef } = useHandExpression(landmarksRef, drawOverlayRef, {
+    enabled: error === null,
+    beatFlashRef,
+  })
+
+  useEffect(() => {
+    let last = ''
+    const id = setInterval(() => {
+      const o = palmOrientationRef.current
+      const label = o === 'up' ? '↑ Palm Up' : o === 'down' ? '↓ Palm Down' : ''
+      if (label !== last) { last = label; setPalmLabel(label) }
+    }, 80)
+    return () => clearInterval(id)
+  }, [palmOrientationRef])
 
   useEffect(() => {
     let stream: MediaStream | null = null
@@ -127,6 +159,9 @@ export function CameraView({ onGesture, onBeat }: CameraViewProps) {
         className="camera-view-overlay"
         aria-hidden
       />
+      {palmLabel ? (
+        <div className="palm-side-label">{palmLabel}</div>
+      ) : null}
       {handTrackingError ? (
         <div className="camera-view-hand-error" role="alert">
           {handTrackingError}

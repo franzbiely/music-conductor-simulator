@@ -2,7 +2,7 @@ import { useEffect, useRef, type RefObject } from 'react'
 import type { TrackedHands } from './useHandTracking'
 
 export type GestureEvent = {
-  type: 'wave'
+  type: 'wave' | 'beat'
   /** `performance.now()` when the gesture was recognized */
   at: number
 }
@@ -27,6 +27,7 @@ export type UseGestureDetectionOptions = {
 }
 
 type Sample = { t: number; x: number }
+type YSample = { t: number; y: number }
 
 const DEFAULT_SMOOTH_ALPHA = 0.28
 const DEFAULT_MIN_SWING = 0.042
@@ -58,6 +59,15 @@ export function useGestureDetection(
   const smoothXRef = useRef<number | null>(null)
   const bufferRef = useRef<Sample[]>([])
 
+  // — beat detection state —
+  const smoothYRef = useRef<number | null>(null)
+  const yBufRef = useRef<YSample[]>([])
+  /** 0 idle, 1 armed (saw down), waiting for up-reversal */
+  const beatPhaseRef = useRef(0)
+  const beatDownStartRef = useRef(0)
+  const beatPeakVyRef = useRef(0)
+  const beatCooldownRef = useRef(0)
+
   /** 0 idle, 1 after left, 2 after right, 3 cooldown */
   const phaseRef = useRef(0)
   const seqStartRef = useRef(0)
@@ -72,6 +82,9 @@ export function useGestureDetection(
       smoothXRef.current = null
       idleFollowRef.current = null
       phaseRef.current = 0
+      smoothYRef.current = null
+      yBufRef.current = []
+      beatPhaseRef.current = 0
       return
     }
 
@@ -112,6 +125,41 @@ export function useGestureDetection(
         ma = s / recent.length
       }
       const xForGesture = 0.62 * xSmooth + 0.38 * ma
+
+      // — beat: bounce detection (down → up reversal) —
+      const rawY = lm[wristIndex]!.y
+      const prevY = smoothYRef.current
+      const ySmooth = prevY === null ? rawY : 0.25 * rawY + 0.75 * prevY
+      smoothYRef.current = ySmooth
+
+      const yBuf = yBufRef.current
+      yBuf.push({ t: now, y: ySmooth })
+      while (yBuf.length > 8) yBuf.shift()
+
+      if (yBuf.length >= 3 && now >= beatCooldownRef.current) {
+        const older = yBuf[yBuf.length - 3]!
+        const dt = Math.max(1, now - older.t) / 1000
+        const vy = (ySmooth - older.y) / dt
+
+        const BEAT_DOWN_V = 0.45
+        const BEAT_UP_V = -0.35
+        const BEAT_WINDOW_MS = 300
+
+        if (beatPhaseRef.current === 0 && vy > BEAT_DOWN_V) {
+          beatPhaseRef.current = 1
+          beatDownStartRef.current = now
+          beatPeakVyRef.current = vy
+        } else if (beatPhaseRef.current === 1) {
+          beatPeakVyRef.current = Math.max(beatPeakVyRef.current, vy)
+          if (now - beatDownStartRef.current > BEAT_WINDOW_MS) {
+            beatPhaseRef.current = 0
+          } else if (vy < BEAT_UP_V && beatPeakVyRef.current > BEAT_DOWN_V) {
+            onGestureRef.current?.({ type: 'beat', at: now })
+            beatCooldownRef.current = now + 250
+            beatPhaseRef.current = 0
+          }
+        }
+      }
 
       if (now < cooldownUntilRef.current) {
         rafId = requestAnimationFrame(tick)
@@ -171,6 +219,9 @@ export function useGestureDetection(
       smoothXRef.current = null
       idleFollowRef.current = null
       phaseRef.current = 0
+      smoothYRef.current = null
+      yBufRef.current = []
+      beatPhaseRef.current = 0
     }
   }, [
     enabled,

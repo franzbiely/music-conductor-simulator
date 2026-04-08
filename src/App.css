@@ -26,6 +26,23 @@
   pointer-events: none;
 }
 
+.palm-side-label {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 13px;
+  font-weight: bold;
+  padding: 10px 5px;
+  border-radius: 6px 0 0 6px;
+  pointer-events: none;
+  letter-spacing: 1px;
+}
+
 .camera-view-hand-error {
   position: absolute;
   inset-inline: 0;

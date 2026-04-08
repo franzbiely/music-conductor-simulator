@@ -17,39 +17,40 @@ const NOTE = {
 /** One entry per note: frequency (Hz), duration (s). */
 const HAPPY_BIRTHDAY_MELODY: readonly { f: number; d: number }[] = [
   // "Happy birthday to you"
-  { f: NOTE.C4, d: 10 },
-  { f: NOTE.C4, d: 10 },
-  { f: NOTE.D4, d: 10 },
-  { f: NOTE.C4, d: 10 },
-  { f: NOTE.F4, d: 10 },
-  { f: NOTE.E4, d: 10 },
+  { f: NOTE.C4, d: 20 },
+  { f: NOTE.D4, d: 20 },
+  { f: NOTE.E4, d: 20 },
+  { f: NOTE.F4, d: 20 },
+  { f: NOTE.G4, d: 20 },
+  { f: NOTE.A4, d: 20 },
+  { f: NOTE.Bb4, d: 20 },
   // "Happy birthday to you"
-  { f: NOTE.C4, d: 10 },
-  { f: NOTE.C4, d: 10 },
-  { f: NOTE.D4, d: 0.36 },
-  { f: NOTE.C4, d: 0.36 },
-  { f: NOTE.G4, d: 0.36 },
-  { f: NOTE.F4, d: 0.72 },
-  // "Happy birthday dear …"
-  { f: NOTE.C4, d: 0.18 },
-  { f: NOTE.C4, d: 0.18 },
-  { f: NOTE.C5, d: 0.36 },
-  { f: NOTE.A4, d: 0.36 },
-  { f: NOTE.F4, d: 0.36 },
-  { f: NOTE.E4, d: 0.36 },
-  { f: NOTE.D4, d: 0.72 },
-  // "Happy birthday to you"
-  { f: NOTE.Bb4, d: 0.18 },
-  { f: NOTE.Bb4, d: 0.18 },
-  { f: NOTE.A4, d: 0.36 },
-  { f: NOTE.F4, d: 0.36 },
-  { f: NOTE.G4, d: 0.36 },
-  { f: NOTE.F4, d: 0.84 },
+  // { f: NOTE.C4, d: 10 },
+  // { f: NOTE.C4, d: 10 },
+  // { f: NOTE.D4, d: 0.36 },
+  // { f: NOTE.C4, d: 0.36 },
+  // { f: NOTE.G4, d: 0.36 },
+  // { f: NOTE.F4, d: 0.72 },
+  // // "Happy birthday dear …"
+  // { f: NOTE.C4, d: 0.18 },
+  // { f: NOTE.C4, d: 0.18 },
+  // { f: NOTE.C5, d: 0.36 },
+  // { f: NOTE.A4, d: 0.36 },
+  // { f: NOTE.F4, d: 0.36 },
+  // { f: NOTE.E4, d: 0.36 },
+  // { f: NOTE.D4, d: 0.72 },
+  // // "Happy birthday to you"
+  // { f: NOTE.Bb4, d: 0.18 },
+  // { f: NOTE.Bb4, d: 0.18 },
+  // { f: NOTE.A4, d: 0.36 },
+  // { f: NOTE.F4, d: 0.36 },
+  // { f: NOTE.G4, d: 0.36 },
+  // { f: NOTE.F4, d: 0.84 },
 ]
 
-const SCHEDULE_AHEAD_S = 0.02
+const SCHEDULE_AHEAD_S = 0.2
 const ATTACK_S = 0.12
-const RELEASE_S = 0.28
+const RELEASE_S = 0.028
 
 let context: AudioContext | null = null
 let masterGain: GainNode | null = null
