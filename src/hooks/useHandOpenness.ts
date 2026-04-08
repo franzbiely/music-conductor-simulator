@@ -1,5 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react'
-import type { HandLandmarks21 } from './useHandTracking'
+import type { HandLandmarks21, TrackedHands } from './useHandTracking'
 import { setVolume } from '../conductorAudio'
 
 const WRIST = 0
@@ -47,7 +47,7 @@ const def = {
 }
 
 export function useHandOpenness(
-  landmarksRef: RefObject<HandLandmarks21 | null>,
+  landmarksRef: RefObject<TrackedHands | null>,
   options?: UseHandOpennessOptions,
 ) {
   const enabled = options?.enabled ?? true
@@ -75,7 +75,7 @@ export function useHandOpenness(
     let raf = 0
     const tick = () => {
       const now = performance.now()
-      const lm = landmarksRef.current
+      const lm = landmarksRef.current?.[0]
       const lastT = lastTRef.current
       lastTRef.current = now
       const dt =

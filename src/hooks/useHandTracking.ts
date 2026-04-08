@@ -13,8 +13,10 @@ const MODEL_URL =
 
 export type HandLandmark = NormalizedLandmark
 
-/** When non-null, this is the 21 landmarks for one hand (MediaPipe order). */
+/** 21 landmarks per hand (MediaPipe order). */
 export type HandLandmarks21 = readonly NormalizedLandmark[]
+/** Up to two detected hands (`numHands: 2`), MediaPipe order. */
+export type TrackedHands = readonly HandLandmarks21[]
 
 type VideoFit = 'cover' | 'contain'
 
@@ -69,10 +71,15 @@ function landmarkToCanvas(
   return [x, y]
 }
 
+const HAND_STYLE: readonly [string, string][] = [
+  ['rgba(0, 220, 130, 0.9)', 'rgba(255, 90, 90, 0.95)'],
+  ['rgba(100, 190, 255, 0.9)', 'rgba(255, 210, 120, 0.95)'],
+]
+
 function drawLandmarksOnCanvas(
   canvas: HTMLCanvasElement,
   video: HTMLVideoElement,
-  landmarks: HandLandmarks21,
+  hands: TrackedHands,
   objectFit: VideoFit,
 ) {
   const ctx = canvas.getContext('2d')
@@ -91,29 +98,33 @@ function drawLandmarksOnCanvas(
   const box = computeVideoFitBox(video, objectFit)
   if (!box) return
 
-  const pts = landmarks.map((lm) => landmarkToCanvas(lm, box, dpr))
+  for (let hi = 0; hi < hands.length; hi++) {
+    const landmarks = hands[hi]!
+    const [strokeStyle, fillStyle] = HAND_STYLE[hi] ?? HAND_STYLE[0]!
+    const pts = landmarks.map((lm) => landmarkToCanvas(lm, box, dpr))
 
-  ctx.strokeStyle = 'rgba(0, 220, 130, 0.9)'
-  ctx.fillStyle = 'rgba(255, 90, 90, 0.95)'
-  ctx.lineWidth = Math.max(1.5, 2 * dpr)
-  ctx.lineCap = 'round'
-  ctx.lineJoin = 'round'
+    ctx.strokeStyle = strokeStyle
+    ctx.fillStyle = fillStyle
+    ctx.lineWidth = Math.max(1.5, 2 * dpr)
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
 
-  for (const { start, end } of HandLandmarker.HAND_CONNECTIONS) {
-    const pa = pts[start]
-    const pb = pts[end]
-    if (!pa || !pb) continue
-    ctx.beginPath()
-    ctx.moveTo(pa[0], pa[1])
-    ctx.lineTo(pb[0], pb[1])
-    ctx.stroke()
-  }
+    for (const { start, end } of HandLandmarker.HAND_CONNECTIONS) {
+      const pa = pts[start]
+      const pb = pts[end]
+      if (!pa || !pb) continue
+      ctx.beginPath()
+      ctx.moveTo(pa[0], pa[1])
+      ctx.lineTo(pb[0], pb[1])
+      ctx.stroke()
+    }
 
-  const r = Math.max(2, 3 * dpr)
-  for (const p of pts) {
-    ctx.beginPath()
-    ctx.arc(p[0], p[1], r, 0, Math.PI * 2)
-    ctx.fill()
+    const r = Math.max(2, 3 * dpr)
+    for (const p of pts) {
+      ctx.beginPath()
+      ctx.arc(p[0], p[1], r, 0, Math.PI * 2)
+      ctx.fill()
+    }
   }
 }
 
@@ -124,7 +135,7 @@ export function useHandTracking(
 ) {
   const objectFit = options?.objectFit ?? 'cover'
   const enabled = options?.enabled ?? true
-  const landmarksRef = useRef<HandLandmarks21 | null>(null)
+  const landmarksRef = useRef<TrackedHands | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -143,7 +154,7 @@ export function useHandTracking(
         if (cancelled) return
         landmarker = await HandLandmarker.createFromOptions(wasm, {
           baseOptions: { modelAssetPath: MODEL_URL },
-          numHands: 1,
+          numHands: 2,
           runningMode: 'VIDEO',
         })
       } catch (e) {
@@ -177,13 +188,13 @@ export function useHandTracking(
         }
 
         const result = landmarker.detectForVideo(video, performance.now())
-        const hand = result.landmarks[0]
+        const list = result.landmarks.slice(0, 2) as HandLandmarks21[]
 
-        if (hand) {
-          landmarksRef.current = hand
-          drawLandmarksOnCanvas(canvas, video, hand, objectFit)
+        if (list.length > 0) {
+          landmarksRef.current = list
+          drawLandmarksOnCanvas(canvas, video, list, objectFit)
         } else {
-          landmarksRef.current = null
+          landmarksRef.current = []
           const dpr = window.devicePixelRatio || 1
           const bw = Math.max(1, Math.round(video.clientWidth * dpr))
           const bh = Math.max(1, Math.round(video.clientHeight * dpr))

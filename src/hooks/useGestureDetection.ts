@@ -1,5 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react'
-import type { HandLandmarks21 } from './useHandTracking'
+import type { TrackedHands } from './useHandTracking'
 
 export type GestureEvent = {
   type: 'wave'
@@ -41,7 +41,7 @@ const DEFAULT_COOLDOWN_MS = 450
  * moves left → right → left within ~1s.
  */
 export function useGestureDetection(
-  landmarksRef: RefObject<HandLandmarks21 | null>,
+  landmarksRef: RefObject<TrackedHands | null>,
   options?: UseGestureDetectionOptions,
 ) {
   const enabled = options?.enabled ?? true
@@ -79,7 +79,7 @@ export function useGestureDetection(
 
     const tick = () => {
       const now = performance.now()
-      const lm = landmarksRef.current
+      const lm = landmarksRef.current?.[0]
 
       if (!lm || lm.length <= wristIndex) {
         rafId = requestAnimationFrame(tick)

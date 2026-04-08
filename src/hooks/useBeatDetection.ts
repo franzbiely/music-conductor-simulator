@@ -1,5 +1,5 @@
 import { useEffect, useRef, type RefObject } from 'react'
-import type { HandLandmarks21 } from './useHandTracking'
+import type { TrackedHands } from './useHandTracking'
 
 export type UseBeatDetectionOptions = {
   enabled?: boolean
@@ -35,7 +35,7 @@ const DEFAULT_WRIST = 0
  * velocity (y increasing) triggers `onBeat`. Uses refs + rAF only.
  */
 export function useBeatDetection(
-  landmarksRef: RefObject<HandLandmarks21 | null>,
+  landmarksRef: RefObject<TrackedHands | null>,
   options?: UseBeatDetectionOptions,
 ) {
   const enabled = options?.enabled ?? true
@@ -72,7 +72,7 @@ export function useBeatDetection(
 
     const tick = () => {
       const now = performance.now()
-      const lm = landmarksRef.current
+      const lm = landmarksRef.current?.[0]
 
       if (!lm || lm.length <= wristIndex) {
         rafId = requestAnimationFrame(tick)
