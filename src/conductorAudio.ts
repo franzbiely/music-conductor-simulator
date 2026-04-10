@@ -15,37 +15,37 @@ const NOTE = {
 } as const
 
 /** One entry per note: frequency (Hz), duration (s). */
+const prolongation = 20
 const HAPPY_BIRTHDAY_MELODY: readonly { f: number; d: number }[] = [
   // "Happy birthday to you"
-  { f: NOTE.C4, d: 20 },
-  { f: NOTE.D4, d: 20 },
-  { f: NOTE.E4, d: 20 },
-  { f: NOTE.F4, d: 20 },
-  { f: NOTE.G4, d: 20 },
-  { f: NOTE.A4, d: 20 },
-  { f: NOTE.Bb4, d: 20 },
+  { f: NOTE.C4, d: prolongation },
+  { f: NOTE.C4, d: prolongation },
+  { f: NOTE.D4, d: prolongation },
+  { f: NOTE.C4, d: prolongation },
+  { f: NOTE.F4, d: prolongation },
+  { f: NOTE.E4, d: prolongation },
   // "Happy birthday to you"
-  // { f: NOTE.C4, d: 10 },
-  // { f: NOTE.C4, d: 10 },
-  // { f: NOTE.D4, d: 0.36 },
-  // { f: NOTE.C4, d: 0.36 },
-  // { f: NOTE.G4, d: 0.36 },
-  // { f: NOTE.F4, d: 0.72 },
+  { f: NOTE.C4, d: prolongation },
+  { f: NOTE.C4, d: prolongation },
+  { f: NOTE.D4, d: prolongation },
+  { f: NOTE.C4, d: prolongation },
+  { f: NOTE.G4, d: prolongation },
+  { f: NOTE.F4, d: prolongation },
   // // "Happy birthday dear …"
-  // { f: NOTE.C4, d: 0.18 },
-  // { f: NOTE.C4, d: 0.18 },
-  // { f: NOTE.C5, d: 0.36 },
-  // { f: NOTE.A4, d: 0.36 },
-  // { f: NOTE.F4, d: 0.36 },
-  // { f: NOTE.E4, d: 0.36 },
-  // { f: NOTE.D4, d: 0.72 },
+  { f: NOTE.C4, d: prolongation },
+  { f: NOTE.C4, d: prolongation },
+  { f: NOTE.C5, d: prolongation },
+  { f: NOTE.A4, d: prolongation },
+  { f: NOTE.F4, d: prolongation },
+  { f: NOTE.E4, d: prolongation },
+  { f: NOTE.D4, d: prolongation },
   // // "Happy birthday to you"
-  // { f: NOTE.Bb4, d: 0.18 },
-  // { f: NOTE.Bb4, d: 0.18 },
-  // { f: NOTE.A4, d: 0.36 },
-  // { f: NOTE.F4, d: 0.36 },
-  // { f: NOTE.G4, d: 0.36 },
-  // { f: NOTE.F4, d: 0.84 },
+  { f: NOTE.Bb4, d: prolongation },
+  { f: NOTE.Bb4, d: prolongation },
+  { f: NOTE.A4, d: prolongation },
+  { f: NOTE.F4, d: prolongation },
+  { f: NOTE.G4, d: prolongation },
+  { f: NOTE.F4, d: prolongation },
 ]
 
 const SCHEDULE_AHEAD_S = 0.2

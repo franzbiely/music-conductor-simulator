@@ -43,7 +43,7 @@ const def = {
   deadband: 0.085,
   minHandScale: 0.045,
   integratePerS: 0.42,
-  outSmooth: 0.5,
+  outSmooth: 0.075,
 }
 
 export function useHandOpenness(
