@@ -152,6 +152,7 @@ export function stopSong(): void {
  * Master output level (0 = silent, 1 = full).
  */
 export function setVolume(value: number): void {
+  console.log('setVolume', value)
   const v = clampVolume(value)
   const { ctx, gain } = getGraph()
   const t = ctx.currentTime

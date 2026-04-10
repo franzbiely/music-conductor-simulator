@@ -5,7 +5,6 @@ import {
 } from './hooks/useGestureDetection'
 import { useBeatDetection } from './hooks/useBeatDetection'
 import { useHandExpression } from './hooks/useHandExpression'
-import { useHandOpenness } from './hooks/useHandOpenness'
 import { useHandTracking, type DrawOverlayFn } from './hooks/useHandTracking'
 
 export type { GestureEvent }
@@ -78,8 +77,6 @@ export function CameraView({ onGesture, onBeat, onBounce }: CameraViewProps) {
     enabled: error === null,
     onBeat: handleBeat,
   })
-
-  useHandOpenness(landmarksRef, { enabled: error === null })
 
   const { palmOrientationRef } = useHandExpression(landmarksRef, drawOverlayRef, {
     enabled: error === null,

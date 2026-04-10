@@ -1,6 +1,6 @@
 import { useEffect, useRef, type RefObject } from 'react'
 import type { DrawOverlayFn, TrackedHands, HandLandmarks21 } from './useHandTracking'
-import { stopSong } from '../conductorAudio'
+import { stopSong, setVolume } from '../conductorAudio'
 
 const WRIST = 0
 const MID_MCP = 9
@@ -35,6 +35,10 @@ function computeOpenness(lm: HandLandmarks21): number {
       Math.hypot(lm[TIP_T]!.x - lm[TIP_P]!.x, lm[TIP_T]!.y - lm[TIP_P]!.y)) /
     4
   return Math.min(1, Math.max(0, (avg / scale - 0.25) / 0.85))
+}
+
+const LEVEL_VOLUME: Record<string, number> = {
+  ppp: 0.05, pp: 0.15, p: 0.3, mp: 0.45, mf: 0.6, f: 0.75, ff: 0.9, fff: 1,
 }
 
 function opennessToLevel(v: number): string {
@@ -114,7 +118,10 @@ export function useHandExpression(
         if (i === 0) palmOrientationRef.current = palmOrient
 
         const level = opennessToLevel(smooth)
-        if (i === 0) prevLevelRef.current = level
+        if (i === 0) {
+          prevLevelRef.current = level
+          setVolume(LEVEL_VOLUME[level] ?? 1)
+        }
 
         const gesture = i === 0 ? opennessToGesture(smooth, isBeat) : opennessToGesture(smooth, false)
         const label = `${gesture} (${level})`
