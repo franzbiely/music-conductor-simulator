@@ -38,7 +38,6 @@ function computeOpenness(lm: HandLandmarks21): number {
 }
 
 function opennessToLevel(v: number): string {
-  if (v < 0.05) return 'stop'   // fully closed fist
   if (v < 0.15) return 'ppp'
   if (v < 0.3) return 'pp'
   if (v < 0.45) return 'p'
@@ -51,7 +50,6 @@ function opennessToLevel(v: number): string {
 
 function opennessToGesture(v: number, isBeat: boolean): string {
   if (isBeat) return 'Beat'
-  if (v < 0.05) return 'Stop'
   return v >= 0.5 ? 'Crescendo' : 'Decrescendo'
 }
 
@@ -72,6 +70,7 @@ export function useHandExpression(
   const palmZSmRef = useRef<number[]>([])
   const palmOrientationRef = useRef<PalmOrientation>('neutral')
   const prevLevelRef = useRef<string>('')
+  const stopFiredRef = useRef(false)
 
   useEffect(() => {
     if (!enabled) {
@@ -80,6 +79,7 @@ export function useHandExpression(
       palmZSmRef.current = []
       palmOrientationRef.current = 'neutral'
       prevLevelRef.current = ''
+      stopFiredRef.current = false
       return
     }
 
@@ -114,9 +114,6 @@ export function useHandExpression(
         if (i === 0) palmOrientationRef.current = palmOrient
 
         const level = opennessToLevel(smooth)
-        if (i === 0 && level === 'stop' && prevLevelRef.current !== 'stop') {
-          stopSong()
-        }
         if (i === 0) prevLevelRef.current = level
 
         const gesture = i === 0 ? opennessToGesture(smooth, isBeat) : opennessToGesture(smooth, false)
@@ -141,6 +138,22 @@ export function useHandExpression(
         ctx.fillText(label, lx, ly)
       }
 
+      // ── two-hand closed → stop; one-hand closed → ppp (no stop) ──
+      const CLOSED_THRESHOLD = 0.15
+      const handCount = hands.length
+      const allClosed = handCount >= 2 &&
+        smoothRef.current.slice(0, handCount).every(v => v < CLOSED_THRESHOLD)
+
+      if (allClosed) {
+        if (!stopFiredRef.current) {
+          stopSong()
+          stopFiredRef.current = true
+        }
+      } else {
+        stopFiredRef.current = false
+      }
+      // one-hand closed: opennessToLevel already returns 'ppp' at <0.15 — no extra action needed
+
       ctx.restore()
     }
 
@@ -150,6 +163,7 @@ export function useHandExpression(
       palmZSmRef.current = []
       palmOrientationRef.current = 'neutral'
       prevLevelRef.current = ''
+      stopFiredRef.current = false
     }
   }, [enabled, drawOverlayRef])
 
