@@ -1,6 +1,7 @@
 import { useEffect, useRef, type RefObject } from 'react'
 import type { DrawOverlayFn, TrackedHands, HandLandmarks21 } from './useHandTracking'
 import { stopSong, setVolume } from '../conductorAudio'
+import type { HandExpressionEvent } from '../CameraView'
 
 const WRIST = 0
 const MID_MCP = 9
@@ -60,6 +61,7 @@ function opennessToGesture(v: number, isBeat: boolean): string {
 export type UseHandExpressionOptions = {
   enabled?: boolean
   beatFlashRef?: RefObject<boolean>
+  onExpression?: (event: HandExpressionEvent) => void
 }
 
 export function useHandExpression(
@@ -70,11 +72,14 @@ export function useHandExpression(
   const enabled = options?.enabled ?? true
   const beatFlashStableRef = useRef(options?.beatFlashRef)
   beatFlashStableRef.current = options?.beatFlashRef
+  const onExpressionRef = useRef(options?.onExpression)
+  onExpressionRef.current = options?.onExpression
   const smoothRef = useRef<number[]>([])
   const palmZSmRef = useRef<number[]>([])
   const palmOrientationRef = useRef<PalmOrientation>('neutral')
   const prevLevelRef = useRef<string>('')
   const stopFiredRef = useRef(false)
+  const lastExpressionKeyRef = useRef('')
 
   useEffect(() => {
     if (!enabled) {
@@ -84,6 +89,7 @@ export function useHandExpression(
       palmOrientationRef.current = 'neutral'
       prevLevelRef.current = ''
       stopFiredRef.current = false
+      lastExpressionKeyRef.current = ''
       return
     }
 
@@ -126,6 +132,19 @@ export function useHandExpression(
         const gesture = i === 0 ? opennessToGesture(smooth, isBeat) : opennessToGesture(smooth, false)
         const label = `${gesture} (${level})`
 
+        if (i === 0) {
+          const nextEvent: HandExpressionEvent = {
+            gesture: gesture as HandExpressionEvent['gesture'],
+            level: level as HandExpressionEvent['level'],
+            stopped: false,
+          }
+          const nextKey = `${nextEvent.gesture}:${nextEvent.level}`
+          if (nextKey !== lastExpressionKeyRef.current) {
+            lastExpressionKeyRef.current = nextKey
+            onExpressionRef.current?.(nextEvent)
+          }
+        }
+
         const wrist = lm[WRIST]!
         const cx = (wrist.x * box.vw * box.scale + box.offsetX) * dpr
         const cy = (wrist.y * box.vh * box.scale + box.offsetY) * dpr
@@ -155,6 +174,8 @@ export function useHandExpression(
         if (!stopFiredRef.current) {
           stopSong()
           stopFiredRef.current = true
+          lastExpressionKeyRef.current = 'Decrescendo:ppp:stop'
+          onExpressionRef.current?.({ gesture: 'Decrescendo', level: 'ppp', stopped: true })
         }
       } else {
         stopFiredRef.current = false
@@ -171,6 +192,7 @@ export function useHandExpression(
       palmOrientationRef.current = 'neutral'
       prevLevelRef.current = ''
       stopFiredRef.current = false
+      lastExpressionKeyRef.current = ''
     }
   }, [enabled, drawOverlayRef])
 

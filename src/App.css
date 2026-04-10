@@ -1,11 +1,12 @@
 .camera-view-wrap {
   position: relative;
-  max-width: min(100%, 480px);
+  max-width: 100%;
   width: 100%;
   aspect-ratio: 4 / 3;
-  border-radius: 8px;
+  border-radius: 24px;
   overflow: hidden;
   background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .camera-view-wrap .camera-view {
@@ -55,7 +56,7 @@
 }
 
 .camera-view--error {
-  max-width: min(100%, 480px);
+  max-width: 100%;
   padding: 12px 16px;
   border-radius: 8px;
   background: var(--accent-bg);
@@ -65,186 +66,284 @@
 }
 
 .counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
-
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
+  font-size: 15px;
+  padding: 0.8rem 1rem;
+  border-radius: 999px;
+  color: #f5f7ff;
+  background: rgba(124, 92, 255, 0.18);
+  border: 1px solid rgba(164, 137, 255, 0.28);
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 }
 
-.hero {
+.counter:hover {
+  transform: translateY(-1px);
+  border-color: rgba(164, 137, 255, 0.55);
+  background: rgba(124, 92, 255, 0.24);
+}
+
+.counter:focus-visible {
+  outline: 2px solid #a489ff;
+  outline-offset: 2px;
+}
+
+.app-shell {
+  min-height: 100svh;
+  padding: 32px;
+  display: grid;
+  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr) minmax(280px, 340px);
+  gap: 24px;
+  align-items: stretch;
+  box-sizing: border-box;
+  text-align: left;
+  color: #eef2ff;
   position: relative;
+  overflow: hidden;
+}
 
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
+.confetti-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 30;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -12%;
+  width: 10px;
+  height: 18px;
+  border-radius: 999px;
+  opacity: 0.9;
+  background: linear-gradient(180deg, #ffd166 0%, #ef476f 50%, #06d6a0 100%);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
+  animation: confetti-fall linear infinite;
+}
+
+.confetti-piece:nth-child(3n) {
+  background: linear-gradient(180deg, #7c5cff 0%, #30c7ec 100%);
+}
+
+.confetti-piece:nth-child(4n) {
+  background: linear-gradient(180deg, #ff7b72 0%, #ffd166 100%);
+}
+
+.confetti-piece:nth-child(5n) {
+  background: linear-gradient(180deg, #9ef01a 0%, #00bbf9 100%);
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(0, 120svh, 0) rotate(720deg);
+  }
+}
+.fixed {
+  position: fixed;
+
+}
+
+.glass-panel {
+  background: rgba(11, 16, 32, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.panel {
+  border-radius: 28px;
+  padding: 24px;
+}
+
+.panel-heading,
+.camera-copy,
+.info-section {
+  display: grid;
+  gap: 8px;
+}
+
+.eyebrow,
+.hud-label,
+.log-index {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(202, 211, 255, 0.68);
+}
+
+.logs-panel,
+.info-panel {
+  min-height: 0;
+}
+
+.logs-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 20px;
+}
+
+.log-list {
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  gap: 10px;
+  padding-right: 4px;
+  position: fixed;
+  top: 130px;
+  left: 30px;
+}
+
+.log-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.camera-column {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 18px;
+  min-height: 0;
+}
+
+.camera-copy h1,
+.panel h2 {
+  margin: 0;
+  color: #f8faff;
+}
+
+.camera-copy h1 {
+  font-size: clamp(2rem, 3vw, 3.25rem);
+  line-height: 1.02;
+  max-width: 12ch;
+}
+
+.camera-stage {
+  position: relative;
+  padding: 14px;
+  border-radius: 32px;
+  min-height: 0;
+}
+
+.camera-hud {
+  position: absolute;
+  left: 28px;
+  right: 28px;
+  bottom: 28px;
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 24px;
+}
+
+.gesture-pills,
+.camera-controls,
+.hud-meta,
+.info-section ul,
+.info-section ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.gesture-pill {
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(236, 240, 255, 0.82);
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.gesture-pill.is-active {
+  background: linear-gradient(135deg, rgba(124, 92, 255, 0.48), rgba(48, 199, 236, 0.32));
+  border-color: rgba(164, 137, 255, 0.56);
+  color: #fff;
+}
+
+.hud-meta {
+  justify-content: space-between;
+}
+
+.hud-card {
+  min-width: 120px;
+  display: grid;
+  gap: 4px;
+}
+
+.hud-card strong {
+  font-size: clamp(1.4rem, 2vw, 2rem);
+  line-height: 1;
+  color: #fff;
+}
+
+.camera-controls {
+  justify-content: center;
+}
+
+.info-panel {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+}
+
+.info-section {
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.info-section:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.info-section ul,
+.info-section ol {
+  margin: 0;
+  padding-left: 18px;
+  flex-direction: column;
+  gap: 8px;
+  color: rgba(231, 236, 255, 0.82);
+}
+
+.info-section p,
+.log-item span:last-child {
+  color: rgba(231, 236, 255, 0.82);
+}
+
+@media (max-width: 1180px) {
+  .app-shell {
+    grid-template-columns: 1fr;
   }
 
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
+  .logs-panel,
+  .info-panel,
+  .camera-column {
+    min-height: auto;
   }
 }
 
-#center {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
+@media (max-width: 720px) {
+  .app-shell {
+    padding: 18px;
     gap: 18px;
   }
-}
 
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
+  .panel,
+  .camera-stage {
+    padding: 18px;
   }
 
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
-}
-
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-}
-
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
-}
-
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
-}
-
-.ticks {
-  position: relative;
-  width: 100%;
-
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
-
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
-  }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
+  .camera-hud {
+    position: static;
+    margin-top: 14px;
   }
 }

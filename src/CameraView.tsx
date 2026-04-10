@@ -9,6 +9,11 @@ import { useHandExpression } from './hooks/useHandExpression'
 import { useHandTracking, type DrawOverlayFn } from './hooks/useHandTracking'
 
 export type { GestureEvent }
+export type HandExpressionEvent = {
+  gesture: 'Beat' | 'Crescendo' | 'Decrescendo'
+  level: 'ppp' | 'pp' | 'p' | 'mp' | 'mf' | 'f' | 'ff' | 'fff'
+  stopped: boolean
+}
 
 function cameraErrorMessage(err: unknown): string {
   if (err instanceof DOMException) {
@@ -39,9 +44,10 @@ type CameraViewProps = {
   onGesture?: (event: GestureEvent) => void
   onBeat?: () => void
   onBounce?: () => void
+  onExpression?: (event: HandExpressionEvent) => void
 }
 
-export function CameraView({ onGesture, onBeat, onBounce }: CameraViewProps) {
+export function CameraView({ onGesture, onBeat, onBounce, onExpression }: CameraViewProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const drawOverlayRef = useRef<DrawOverlayFn | null>(null)
@@ -86,6 +92,7 @@ export function CameraView({ onGesture, onBeat, onBounce }: CameraViewProps) {
   const { palmOrientationRef } = useHandExpression(landmarksRef, drawOverlayRef, {
     enabled: error === null,
     beatFlashRef,
+    onExpression,
   })
 
   useEffect(() => {

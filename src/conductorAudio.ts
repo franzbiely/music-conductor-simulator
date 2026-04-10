@@ -95,6 +95,7 @@ export function subscribeMelodyStep(l: Listener): () => void {
   listeners.add(l); return () => { listeners.delete(l) }
 }
 export function getMelodyStepIndex(): number { return melodyStepIndex }
+export function getMelodyStepCount(): number { return HAPPY_BIRTHDAY_MELODY.length }
 
 /** Stop oscillators without resetting playback state. */
 function stopActiveOscillators(): void {
