@@ -87,6 +87,25 @@ async function ensureRunning(): Promise<AudioContext> {
 /** Step index for beat-by-beat `playNextMelodyNote` (wraps at end). */
 let melodyStepIndex = 0
 
+/* ── subscription for React (useSyncExternalStore) ── */
+type Listener = () => void
+const listeners = new Set<Listener>()
+function notifyListeners() { listeners.forEach(l => l()) }
+export function subscribeMelodyStep(l: Listener): () => void {
+  listeners.add(l); return () => { listeners.delete(l) }
+}
+export function getMelodyStepIndex(): number { return melodyStepIndex }
+
+/** Stop oscillators without resetting playback state. */
+function stopActiveOscillators(): void {
+  while (activeOscillators.length > 0) {
+    const osc = activeOscillators.pop()
+    if (!osc) continue
+    try { osc.stop() } catch { /* already stopped */ }
+    try { osc.disconnect() } catch { /* noop */ }
+  }
+}
+
 stopSong()
 
 function scheduleMelodyNoteAt(
@@ -122,23 +141,11 @@ function scheduleMelodyNoteAt(
  * Stops all currently playing note oscillators immediately (low latency).
  */
 export function stopSong(): void {
-  const { ctx } = getGraph()
-  playbackEndAt = ctx.currentTime
-
-  while (activeOscillators.length > 0) {
-    const osc = activeOscillators.pop()
-    if (!osc) continue
-    try {
-      osc.stop()
-    } catch {
-      /* already stopped */
-    }
-    try {
-      osc.disconnect()
-    } catch {
-      /* noop */
-    }
-  }
+  getGraph()
+  playbackEndAt = 0
+  melodyStepIndex = 0
+  notifyListeners()
+  stopActiveOscillators()
 }
 
 /**
@@ -179,13 +186,14 @@ export async function playSong(): Promise<void> {
  */
 export async function playNextMelodyNote(): Promise<void> {
   const ctx = await ensureRunning()
-  stopSong()
+  stopActiveOscillators()
   const { gain: outGain } = getGraph()
   const idx = melodyStepIndex
   const note = HAPPY_BIRTHDAY_MELODY[idx]!
   const t0 = ctx.currentTime + SCHEDULE_AHEAD_S
   const lastStop = scheduleMelodyNoteAt(ctx, outGain, t0, note.f, note.d)
   melodyStepIndex = (idx + 1) % HAPPY_BIRTHDAY_MELODY.length
+  notifyListeners()
   playbackEndAt = Math.max(playbackEndAt, lastStop)
   console.debug(
     '[audio] beat → note',
@@ -199,9 +207,7 @@ export async function playNextMelodyNote(): Promise<void> {
 
 export async function playPreviousMelodyNote(): Promise<void> {
   const ctx = await ensureRunning()
-
-  stopSong()
-
+  stopActiveOscillators()
   const { gain: outGain } = getGraph()
   const len = HAPPY_BIRTHDAY_MELODY.length
   const idx = (melodyStepIndex - 1 + len) % len
@@ -209,6 +215,7 @@ export async function playPreviousMelodyNote(): Promise<void> {
   const t0 = ctx.currentTime + SCHEDULE_AHEAD_S
   const lastStop = scheduleMelodyNoteAt(ctx, outGain, t0, note.f, note.d)
   melodyStepIndex = idx
+  notifyListeners()
   playbackEndAt = Math.max(playbackEndAt, lastStop)
   console.debug(
     '[audio] prev → note',

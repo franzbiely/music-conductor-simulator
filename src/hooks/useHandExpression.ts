@@ -1,5 +1,6 @@
 import { useEffect, useRef, type RefObject } from 'react'
 import type { DrawOverlayFn, TrackedHands, HandLandmarks21 } from './useHandTracking'
+import { stopSong } from '../conductorAudio'
 
 const WRIST = 0
 const MID_MCP = 9
@@ -37,18 +38,20 @@ function computeOpenness(lm: HandLandmarks21): number {
 }
 
 function opennessToLevel(v: number): string {
-  if (v < 0.1) return 'ppp'
-  if (v < 0.25) return 'pp'
-  if (v < 0.4) return 'p'
-  if (v < 0.55) return 'mp'
-  if (v < 0.7) return 'mf'
-  if (v < 0.85) return 'f'
-  if (v < 0.95) return 'ff'
+  if (v < 0.05) return 'stop'   // fully closed fist
+  if (v < 0.15) return 'ppp'
+  if (v < 0.3) return 'pp'
+  if (v < 0.45) return 'p'
+  if (v < 0.6) return 'mp'
+  if (v < 0.75) return 'mf'
+  if (v < 0.9) return 'f'
+  if (v < 0.97) return 'ff'
   return 'fff'
 }
 
 function opennessToGesture(v: number, isBeat: boolean): string {
   if (isBeat) return 'Beat'
+  if (v < 0.05) return 'Stop'
   return v >= 0.5 ? 'Crescendo' : 'Decrescendo'
 }
 
@@ -68,6 +71,7 @@ export function useHandExpression(
   const smoothRef = useRef<number[]>([])
   const palmZSmRef = useRef<number[]>([])
   const palmOrientationRef = useRef<PalmOrientation>('neutral')
+  const prevLevelRef = useRef<string>('')
 
   useEffect(() => {
     if (!enabled) {
@@ -75,6 +79,7 @@ export function useHandExpression(
       smoothRef.current = []
       palmZSmRef.current = []
       palmOrientationRef.current = 'neutral'
+      prevLevelRef.current = ''
       return
     }
 
@@ -108,8 +113,14 @@ export function useHandExpression(
           smZ < -0.025 ? 'up' : smZ > 0.025 ? 'down' : 'neutral'
         if (i === 0) palmOrientationRef.current = palmOrient
 
+        const level = opennessToLevel(smooth)
+        if (i === 0 && level === 'stop' && prevLevelRef.current !== 'stop') {
+          stopSong()
+        }
+        if (i === 0) prevLevelRef.current = level
+
         const gesture = i === 0 ? opennessToGesture(smooth, isBeat) : opennessToGesture(smooth, false)
-        const label = `${gesture} (${opennessToLevel(smooth)})`
+        const label = `${gesture} (${level})`
 
         const wrist = lm[WRIST]!
         const cx = (wrist.x * box.vw * box.scale + box.offsetX) * dpr
@@ -138,6 +149,7 @@ export function useHandExpression(
       smoothRef.current = []
       palmZSmRef.current = []
       palmOrientationRef.current = 'neutral'
+      prevLevelRef.current = ''
     }
   }, [enabled, drawOverlayRef])
 

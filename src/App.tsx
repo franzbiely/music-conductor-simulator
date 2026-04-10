@@ -1,15 +1,15 @@
-import { useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { CameraView } from './CameraView'
 import { routeBeatToAudio } from './beatAudioBridge'
 import { routeGestureToAudio } from './gestureAudioBridge'
-import { playNextMelodyNote, playPreviousMelodyNote } from './conductorAudio'
+import { playNextMelodyNote, playPreviousMelodyNote, subscribeMelodyStep, getMelodyStepIndex } from './conductorAudio'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const melodyStep = useSyncExternalStore(subscribeMelodyStep, getMelodyStepIndex)
 
   return (
     <>
@@ -25,11 +25,8 @@ function App() {
             Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
           </p>
         </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Bounces: {count}
+        <button className="counter" disabled>
+          Step: {melodyStep}
         </button>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button className="counter" onClick={() => void playPreviousMelodyNote()}>
@@ -42,7 +39,7 @@ function App() {
         <CameraView
           onGesture={routeGestureToAudio}
           onBeat={routeBeatToAudio}
-          onBounce={() => setCount((c) => c + 1)}
+          onBounce={() => {}}
         />
       </section>
 
